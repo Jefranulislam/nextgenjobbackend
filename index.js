@@ -23,8 +23,11 @@ async function run() {
   try {
     
     const jobsCollection = client.db("jobsCollection").collection("jobs");
-    const userCollection = client.db("jobsCollection").collection("applicant");
+    const userCollection = client.db("userCollection").collection("user");
     await client.connect();
+    
+    
+    
     app.get("/jobs", async (req, res) => {
       try {
 
@@ -71,41 +74,76 @@ async function run() {
         res.status(500).send("Server error");
       }
     });
+  
+    app.put("/jobs/:id", async (req, res) => {
+      try {
+        const jobId = req.params.id;
+        const updatedJobInfo = req.body;
     
+        const result = await jobsCollection.updateOne(
+          { _id: ObjectId(jobId) }, 
+          { $set: updatedJobInfo }
+        );
+    
+        if (result.modifiedCount === 1) {
+          return res.status(200).json({
+            message: "Job Updated",
+            jobId: jobId,
+          });
+        } else {
+          return res.status(404).json({ error: "Job not found or not updated" });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).send("Server error");
+      }
+    });
 
-      //Signin 
 
-      app.put('/user/:email',async(req,res)=>{
-        const email = req.params.email;
-        const user = req.body;
-        const filter ={email: new email, role: new role};
-        const options = {upsert: true};
-        const updateDoc = {
-          $set : user,
-        };
-        const result = await userCollection.updateOne(filter,updateDoc,options);
-        res.send(result);
-      })
+
 
       app.post('/signin', async (req, res) => {
         try {
-          const user = req.body;
-          // const { name, email, password, role } = req.body;
-          const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN);
-        res.send(accessToken);
+         const { name, email, password, role } = req.body;
+         const result = await userCollection.insertOne({ name, email, password, role });
+         if (result.insertedCount === 1) {
+           return res
+             .status(201)
+             .json({
+               message: "User created successfully",
+               jobId: result.insertedId,
+             });
+         }
+         res.send(result);
+         console.log(req.body);
+         res.json({status: 'ok'})
+          // const accessToken = jwt.sign({ name, email, password, role }, process.env.ACCESS_TOKEN);
+        // res.send(accessToken);
         } catch (error) {
           res.status(500).json({ error: error.message });
         }
-      });
+      }
+      );
 
       //Signup 
-      app.post('/signup', async (req, res) => {
+      app.post('/api/signup', async (req, res) => {
         try {
-          const { name, email, password, role } = req.body;
-          const accessToken = jwt.sign({ name, email, password, role}, process.env.ACCESS_TOKEN);
-          res.json({accessToken});
-        res.send(accessToken);
-          console.log(accessToken);
+          const { name, email, password, role } = userInfo; 
+          userInfo = req.body;
+          // const accessToken = jwt.sign({ name, email, password, role}, process.env.ACCESS_TOKEN);
+          // res.json({accessToken});
+        // res.send(accessToken);
+        const result = await userCollection.insertOne({ name, email, password, role });
+        if (result.insertedCount === 1) {
+          return res
+            .status(201)
+            .json({
+              message: "User created successfully",
+              userInfo: result.insertedId,
+            });
+        }
+        res.send(result);
+        console.log(result);
         } catch (error) {
           res.status(500).json({ error: error.message });
           console.log(error);
@@ -117,24 +155,7 @@ async function run() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      
 
 
   } finally {
@@ -145,8 +166,8 @@ async function run() {
 run();
 
 app.get("/", (req, res) => {
-  res.send("i am Going to hospital ");
+  res.send("WELCOME TO NEXTGENJOB");
 });
 app.listen(port, () => {
-  console.log("i am Going to hospital ");
+  console.log("WELCOME TO NEXTGENJOB ");
 });
