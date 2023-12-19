@@ -102,6 +102,19 @@ async function run() {
           });
 
 
+//get info for hr's mail
+app.get('/jobdetailsByEmail/:email', async (req, res) => {
+  const hremail = req.params.email;
+  console.log(hremail);
+  const hrjobDetails = await jobsCollection.findOne({email:hremail});
+  res.send(hrjobDetails);
+  console.log(hrjobDetails)
+});
+
+
+
+
+
 
 app.put('/signin/:email', async (req,res)=>{
 
